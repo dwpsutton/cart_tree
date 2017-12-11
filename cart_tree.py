@@ -63,11 +63,91 @@ def presort_attributes(dataset):
     return indices
 
 
-'''
-Pre sort each attribute, so you have original data and the sorted indices
-Linear searching algo for each attribute: start at lowest index with each element in left group, then increase index and move items to right group (evaluating impurity)
-Recursive splitting algorithm: takes as arguments the dataset, the targets, and the sorted indices for each attribute.  Must exit if leaf is pure or of minimum size
-Build the decision tree from node class (which knows it's left and right children, parent, splitting attribute, splitting value
-'''
+## NOTHING BENEATH HERE IS TESTED
+
+
+
+class Node():
+    def __init__(self,parent,depth,w0,w1):
+        self.parent= parent
+        self.w0= w0
+        self.w1= w1
+        self.depth= depth
+        self.attribute= None
+        self.value= None
+        self.child_left= None
+        self.child_right= None
+        self.is_leaf= None
+        return None
+
+    def make_splitter(self,attribute,value,child_left,child_right):
+        self.attribute= attribute
+        self.value= value
+        self.child_left= child_left
+        self.child_right= child_right
+        self.is_leaf= False
+        return None
+
+    def make_leaf(self):
+        self.child_right= None
+        self.child_right= None
+        self.attribute= None
+        self.value= None
+        self.is_leaf= True
+        return None
+
+    def score(self,x):
+        if self.is_leaf:
+            return self.w1 / (self.w0+self.w1)
+        elif x[self.attribute] <= self.value:
+            return self.child_left.score(x)
+        else:
+            return self.child_right.score(x)
+
+
+
+
+class ClassificationTree():
+    def __init__(self,max_depth=10,min_samples_leaf=1):
+        self._root_node= None
+        self.max_depth= max_depth
+        self.min_sample_leaf= min_samples_leaf
+        return None
+    
+    def _pre_split_checks(self,depth,left_count,right_count):
+        return depth < self.max_depth and left_count >= self.min_sample_leaf and right_count >= self.min_sample_leaf
+    
+    def _split(self,parent,X,indices,y):
+        attribute,value= split_dataset(X,indices,y)
+        if self._pre_split_checks(parent.depth,sum(X[:,attribute]<=value),sum(X[:,attribute]>value)):
+            #
+            send= np.where(X[:,attribute] <= value)[0]
+            w1= sum( y[send] )
+            w0= len(send) - w1
+            child_left= Node(parent,parent.depth+1,w0,w1)
+            self._split(child_left,X[send,:],indices[send,:],y[send])
+            #
+            send= np.where(X[:,attribute] > value)[0]
+            w1= sum( y[send] )
+            w0= len(send) - w1
+            child_right= Node(parent,parent.depth+1,w0,w1)
+            self._split(child_right,X[send,:],indices[send,:],y[send])
+            #
+            parent.make_splitter(child_left,child_right)
+        else:
+            parent.make_leaf()
+        return None
+
+    def fit(self,X,y):
+        indices= presort_attributes(X)
+        self._root_node= Node(None,0,len(y)-sum(y),sum(y))
+        split(self._root_node,X,indices,y)
+        return None
+
+    def score(self,X):
+        return self._root_node.score(X)
+
+
+
 
 
