@@ -1,36 +1,12 @@
 import numpy as np
-from numba import jit
-
-def gini_index(groups):
-    '''
-        Calculates Gini impurity, 1 - sum_i(p^2) for classes i.
-        Arguments:
-            groups: list of data points in each group. Each group may have 0 or more rows.
-    '''
-    # count all samples at split point
-    n_instances = float(sum([len(group) for group in groups]))
-    # sum weighted Gini index for each group
-    gini = 0.0
-    for group in groups:
-        size = float(len(group))
-        # avoid divide by zero
-        if size == 0:
-            continue
-        score = 0.0
-        # score the group based on the score for each class
-        for target_val in [0,1]:
-            p = [row[-1] for row in group].count(target_val) / size
-            score += p * p
-        # weight the group score by its relative size
-        gini += (1.0 - score) * (size / n_instances)
-    return gini
+#from numba import jit
 
 
 def gini_impurity(p0, p1):
     return 1.0 - p0**2 - p1**2
 
 #@jit
-def split_attribute(datafield,indices,target): # ADD MORE TESTS
+def split_attribute(datafield,indices,target): #TODO: ADD MORE EDGE CASE TESTS
     sum_right= float(sum(target))
     count_right= len(indices)
     sum_left= 0.
@@ -67,7 +43,7 @@ def split_attribute(datafield,indices,target): # ADD MORE TESTS
     return min_val, min_impurity
 
 
-def split_dataset(dataset,sorted_indices,target): # return attribute and value, TEST THIS
+def split_dataset(dataset,sorted_indices,target):
     best_impurity= 1.E20
     best_attribute= 0
     best_value= None
@@ -80,6 +56,11 @@ def split_dataset(dataset,sorted_indices,target): # return attribute and value, 
     return best_attribute, best_value
 
 
+def presort_attributes(dataset):
+    indices= np.zeros(np.shape(dataset),dtype=np.int32)
+    for i in range(np.shape(dataset)[1]):
+        indices[:,i]= np.argsort(dataset[:,i])
+    return indices
 
 
 '''
