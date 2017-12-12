@@ -84,6 +84,38 @@ class TestNode(unittest.TestCase):
         self.assertEqual(root.score([0.5,0.0]),0.5)
         self.assertEqual(root.score([0.1,1.0]),0.0)
         self.assertEqual(root.score([0.9,1.0]),2./3.)
-        
+
+
+class TestTree(unittest.TestCase):
+    def test_quadrant_separable(self):
+        test_data=np.array([ [ 0.03249823,  0.12690494],
+                             [ 0.20112049,  0.39931997],
+                             [ 0.11840662,  0.21909127],
+                             [ 0.662697  ,  0.49125596],
+                             [ 0.91746124,  0.83982612],
+                             [ 0.32045904,  0.40729725],
+                             [ 0.77466425,  0.32775041],
+                             [ 0.78817532,  0.93786513],
+                             [ 0.40143674,  0.95097253],
+                             [ 0.61152213,  0.29923441],
+                             [ 0.44111242,  0.12339367],
+                             [ 0.66534288,  0.0702473 ],
+                             [ 0.51026741,  0.67131538],
+                             [ 0.87975577,  0.07774882],
+                             [ 0.96308942,  0.16073926],
+                             [ 0.30393258,  0.03719697],
+                             [ 0.75398367,  0.40622869],
+                             [ 0.04061277,  0.29120991],
+                             [ 0.75661873,  0.62152135],
+                             [ 0.99778455,  0.62935474]])
+        test_target= np.array([0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0])
+        tree= cart_tree.ClassificationTree(max_depth=2,min_samples_leaf=1)
+        tree.fit(test_data,test_target)
+        self.assertEqual(tree.score([0.25,0.25]),0.)
+        self.assertEqual(tree.score([0.75,0.25]),1.)
+        self.assertEqual(tree.score([0.75,0.25]),1.)
+        self.assertEqual(tree.score([0.75,0.75]),0.)
+
+
 if __name__=='__main__':
     unittest.main()
