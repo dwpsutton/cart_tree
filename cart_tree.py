@@ -125,7 +125,7 @@ class ClassificationTree():
             w1= sum( y[send] )
             w0= len(send) - w1
             child_left= Node(parent,parent.depth+1,w0,w1)
-            self._split(child_left,X[send,:],indices[send,:],y[send])
+            self._split(child_left,X[send,:],indices[send,:],y[send]) # FIX THIS: indices[send,:] will not point to correct elements of X[send,:] (or y[send])...
             #
             send= np.where(X[:,attribute] > value)[0]
             w1= sum( y[send] )
