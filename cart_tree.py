@@ -141,7 +141,7 @@ class ClassificationTree():
     def fit(self,X,y):
         indices= presort_attributes(X)
         self._root_node= Node(None,0,len(y)-sum(y),sum(y))
-        split(self._root_node,X,indices,y)
+        self._split(self._root_node,X,indices,y)
         return None
 
     def score(self,X):
