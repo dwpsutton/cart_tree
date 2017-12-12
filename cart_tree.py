@@ -98,7 +98,7 @@ class Node():
 
     def score(self,x):
         if self.is_leaf:
-            return self.w1 / (self.w0+self.w1)
+            return float(self.w1) / (self.w0+self.w1)
         elif x[self.attribute] <= self.value:
             return self.child_left.score(x)
         else:

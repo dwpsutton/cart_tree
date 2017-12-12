@@ -42,6 +42,48 @@ class TestDatasetSorter(unittest.TestCase):
         for j in range(3):
             for i in range(5):
                 self.assertEqual( indices[i,j], result[i,j] )
+                
+class TestNode(unittest.TestCase):
+    def test_scoring_separable(self):
+        root= cart_tree.Node(None,0,5,5)
+        left= cart_tree.Node(root,1,5,0)
+        right= cart_tree.Node(root,1,0,5)
+        root.make_splitter(0,0.5,left,right)
+        left.make_leaf()
+        right.make_leaf()
+        self.assertEqual(root.score([0.5]),0.)
+        self.assertEqual(root.score([0.1]),0.)
+        self.assertEqual(root.score([0.9]),1.)
+        
+    def test_scoring_mix(self):
+        root= cart_tree.Node(None,0,5,5)
+        left1= cart_tree.Node(root,1,3,1)
+        right1= cart_tree.Node(root,1,2,4)
+        root.make_splitter(0,0.5,left1,right1)
+        right1.make_leaf()
+        left2= cart_tree.Node(left1,2,1,1)
+        leftright= cart_tree.Node(left1,2,2,0)
+        left1.make_splitter(0,0.25,left2,leftright)
+        left2.make_leaf()
+        leftright.make_leaf()
+        self.assertEqual(root.score([0.5]),0.)
+        self.assertEqual(root.score([0.1]),0.5)
+        self.assertEqual(root.score([0.9]),2./3.)
+        
+    def test_scoring_2attributes(self):
+        root= cart_tree.Node(None,0,5,5)
+        left1= cart_tree.Node(root,1,3,1)
+        right1= cart_tree.Node(root,1,2,4)
+        root.make_splitter(0,0.5,left1,right1)
+        right1.make_leaf()
+        left2= cart_tree.Node(left1,2,1,1)
+        leftright= cart_tree.Node(left1,2,2,0)
+        left1.make_splitter(1,0.25,left2,leftright)
+        left2.make_leaf()
+        leftright.make_leaf()
+        self.assertEqual(root.score([0.5,0.0]),0.5)
+        self.assertEqual(root.score([0.1,1.0]),0.0)
+        self.assertEqual(root.score([0.9,1.0]),2./3.)
         
 if __name__=='__main__':
     unittest.main()
