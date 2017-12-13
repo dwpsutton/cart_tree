@@ -121,25 +121,27 @@ class ClassificationTree():
         return None
     
     def _pre_split_checks(self,depth,left_count,right_count):
-        return depth < self.max_depth and left_count >= self.min_sample_leaf and right_count >= self.min_sample_leaf
+        return ( depth < self.max_depth and
+                left_count >= self.min_sample_leaf and
+                right_count >= self.min_sample_leaf)
     
-    def _split(self,parent,X,indices,y):
-        attribute,value= split_dataset(X,indices,y)
-        if self._pre_split_checks(parent.depth,sum(X[:,attribute]<=value),sum(X[:,attribute]>value)):
+    def _split(self, parent, X, indices, y, subset):
+        attribute, value = split_dataset(X, indices[subset, :], y)
+        if (sum(y[subset]) != 0. and sum(y[subset]) != len(subset)) and self._pre_split_checks(parent.depth, sum(X[subset, attribute] <= value), sum(X[subset, attribute] > value)):
             #
-            send= np.where(X[:,attribute] <= value)[0]
-            w1= sum( y[send] )
-            w0= len(send) - w1
-            child_left= Node(parent,parent.depth+1,w0,w1)
-            self._split(child_left,X[send,:],indices[send,:],y[send]) # FIX THIS: indices[send,:] will not point to correct elements of X[send,:] (or y[send])...
+            send = subset[np.where(X[subset, attribute] <= value)[0]]
+            w1 = sum(y[send])
+            w0 = len(send)-w1
+            child_left = Node(parent, parent.depth+1, w0, w1)
+            self._split(child_left, X, indices, y, send) # FIX THIS: indices[send,:] will not point to correct elements of X[send,:] (or y[send])...
             #
-            send= np.where(X[:,attribute] > value)[0]
-            w1= sum( y[send] )
-            w0= len(send) - w1
-            child_right= Node(parent,parent.depth+1,w0,w1)
-            self._split(child_right,X[send,:],indices[send,:],y[send])
+            send = subset[np.where(X[subset, attribute] > value)[0]]
+            w1 = sum(y[send])
+            w0 = len(send)-w1
+            child_right = Node(parent, parent.depth+1, w0, w1)
+            self._split(child_right, X, indices, y, send)
             #
-            parent.make_splitter(child_left,child_right)
+            parent.make_splitter(attribute,value,child_left, child_right)
         else:
             parent.make_leaf()
         return None
@@ -147,7 +149,8 @@ class ClassificationTree():
     def fit(self,X,y):
         indices= presort_attributes(X)
         self._root_node= Node(None,0,len(y)-sum(y),sum(y))
-        self._split(self._root_node,X,indices,y)
+        subset= np.array(range(np.shape(indices)[0]))
+        self._split(self._root_node,X,indices,y,subset)
         return None
 
     def score(self,X):
