@@ -16,6 +16,11 @@ class TestAttributeSplitter(unittest.TestCase):
         target= np.array( map(lambda x: int(x > 0.5),a) )
         self.assertEqual( cart_tree.split_attribute(a,ind,target), (0.67803705, 0.0) )
 
+    def test_binary(self):
+        a= np.array([0,0,0,0,1,1,1,1])
+        ind= np.argsort( a )
+        target= [1,0,0,0,0,1,1,1]
+        self.assertEqual( cart_tree.split_attribute(a,ind,target), (0, 0.375) )
 
 class TestDatasetSplitter(unittest.TestCase):
     def test_separable(self):

@@ -14,7 +14,8 @@ def split_attribute(datafield,indices,target): #TODO: ADD MORE EDGE CASE TESTS
     #
     min_val= None
     min_impurity= 0.5
-    for index in indices:
+    for i in range(len(indices)):
+        index= indices[i]
         count_left += 1
         count_right -= 1
         sum_left += target[index]
@@ -37,7 +38,12 @@ def split_attribute(datafield,indices,target): #TODO: ADD MORE EDGE CASE TESTS
         gini= score_left * count_left/(count_left+count_right) + score_right*count_right/(count_left+count_right)
         #
         value= datafield[index]
-        if gini < min_impurity:
+        #
+        degenerate_value= False
+        if i < len(indices)-1:
+            degenerate_value= value == datafield[indices[i+1]]
+        #
+        if gini < min_impurity and not degenerate_value:
             min_impurity= gini
             min_val= value
     return min_val, min_impurity
