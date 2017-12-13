@@ -7,7 +7,7 @@ def gini_impurity(p0, p1):
 
 #@jit
 def split_attribute(datafield,indices,target): #TODO: ADD MORE EDGE CASE TESTS
-    sum_right= float(sum(target))
+    sum_right= float(sum(target[indices]))
     count_right= len(indices)
     sum_left= 0.
     count_left= 0

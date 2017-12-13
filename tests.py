@@ -19,8 +19,16 @@ class TestAttributeSplitter(unittest.TestCase):
     def test_binary(self):
         a= np.array([0,0,0,0,1,1,1,1])
         ind= np.argsort( a )
-        target= [1,0,0,0,0,1,1,1]
+        target= np.array([1,0,0,0,0,1,1,1])
         self.assertEqual( cart_tree.split_attribute(a,ind,target), (0, 0.375) )
+
+    def test_subset_of_indices(self):
+        a= np.array([ 0.67803705,  0.20739757,  0.31986182,  0.17318886,  0.33332778,
+                     0.70697814,  0.48,  0.792228  ,  0.76916237,  0.8140787 ])
+        ind= np.array(filter(lambda x: x <= 4, np.argsort(a)))
+        target= np.array(map(lambda x: int(x > 0.5), a))
+        self.assertEqual( cart_tree.split_attribute(a,ind,target), (0.33332778, 0.0) )
+
 
 class TestDatasetSplitter(unittest.TestCase):
     def test_separable(self):
