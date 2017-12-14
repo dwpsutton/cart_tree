@@ -49,12 +49,13 @@ def split_attribute(datafield,indices,target): #TODO: ADD MORE EDGE CASE TESTS
     return min_val, min_impurity
 
 
-def split_dataset(dataset,sorted_indices,target):
+def split_dataset(dataset,sorted_indices,target,pr=False):
     best_impurity= 1.E20
     best_attribute= 0
     best_value= None
     for attribute in range(np.shape(dataset)[1]):
         value, impurity= split_attribute(dataset[:,attribute],sorted_indices[:,attribute],target)
+        if pr: print '     ',attribute,value,impurity,sum(target[sorted_indices[:,attribute]])
         if impurity < best_impurity:
             best_impurity= impurity
             best_value= value
@@ -125,8 +126,25 @@ class ClassificationTree():
                 left_count >= self.min_sample_leaf and
                 right_count >= self.min_sample_leaf)
     
+    def get_split_indices(self,attribute,attribute_matching_indices,dataset,indices):
+        # Plan: take allowed row indices from splitting attribute into a set
+        # Iterate through indices columns for other indices and add the row when it comes, to maintain ordering
+        rows_to_keep = set()
+        for row in attribute_matching_indices:
+            rows_to_keep.add(row)
+        indices_out = np.zeros([len(attribute_matching_indices), np.shape(indices)[1]], dtype = np.int32)
+        for this_attribute in np.shape(indices)[1]:
+            idx= 0
+            for i in range(np.shape(indices)[0]):
+                if indices[i, this_attribute] in rows_to_keep:
+                    indices_out[idx, this_attribute] = indices[i,this_attribute]
+                    idx += 1
+        # Output contains something
+        return indices_out
+    
     def _split(self, parent, X, indices, y, subset):
-        attribute, value = split_dataset(X, indices[subset, :], y)
+        attribute, value = split_dataset(X, indices[subset, :], y, pr=False)
+#        print '##',parent.depth+1,attribute,value,sum(X[subset, attribute] <= value),sum(X[subset, attribute] > value),sum(y[subset])/float(len(subset))
         if (sum(y[subset]) != 0. and sum(y[subset]) != len(subset)) and self._pre_split_checks(parent.depth, sum(X[subset, attribute] <= value), sum(X[subset, attribute] > value)):
             #
             send = subset[np.where(X[subset, attribute] <= value)[0]]
