@@ -1,6 +1,9 @@
 import numpy as np
 #from numba import jit
 
+def verbose_print(verbosity,level,string_to_print):
+    if level <= verbosity:
+        print string_to_print
 
 def gini_impurity(p0, p1):
     return 1.0 - p0**2 - p1**2
@@ -49,13 +52,16 @@ def split_attribute(datafield,indices,target): #TODO: ADD MORE EDGE CASE TESTS
     return min_val, min_impurity
 
 
-def split_dataset(dataset,sorted_indices,target,pr=False):
+def split_dataset(dataset,sorted_indices,target,verbose=0):
     best_impurity= 1.E20
     best_attribute= 0
     best_value= None
     for attribute in range(np.shape(dataset)[1]):
         value, impurity= split_attribute(dataset[:,attribute],sorted_indices[:,attribute],target)
-        if pr: print '     ',attribute,value,impurity,sum(target[sorted_indices[:,attribute]])
+        verbose_print(verbose, 2, str(attribute) + ' ' +
+                      str(value) + ' ' + str(impurity) + ' ' +
+                      str(sum(target[sorted_indices[:, attribute]]))
+                      )
         if impurity < best_impurity:
             best_impurity= impurity
             best_value= value
@@ -115,10 +121,11 @@ class Node():
 
 
 class ClassificationTree():
-    def __init__(self,max_depth=10,min_samples_leaf=1):
+    def __init__(self,max_depth=10,min_samples_leaf=1,verbose=0):
         self._root_node= None
         self.max_depth= max_depth
         self.min_sample_leaf= min_samples_leaf
+        self.verbose= verbose
         return None
     
     def _pre_split_checks(self,depth,left_count,right_count):
@@ -126,38 +133,49 @@ class ClassificationTree():
                 left_count >= self.min_sample_leaf and
                 right_count >= self.min_sample_leaf)
     
-    def get_split_indices(self,attribute,attribute_matching_indices,dataset,indices):
-        # Plan: take allowed row indices from splitting attribute into a set
-        # Iterate through indices columns for other indices and add the row when it comes, to maintain ordering
-        rows_to_keep = set()
-        for row in attribute_matching_indices:
-            rows_to_keep.add(row)
-        indices_out = np.zeros([len(attribute_matching_indices), np.shape(indices)[1]], dtype = np.int32)
-        for this_attribute in np.shape(indices)[1]:
-            idx= 0
-            for i in range(np.shape(indices)[0]):
-                if indices[i, this_attribute] in rows_to_keep:
-                    indices_out[idx, this_attribute] = indices[i,this_attribute]
-                    idx += 1
-        # Output contains something
-        return indices_out
+    def remap_split_indices(self, rows_to_keep, indices):
+        number_to_keep = sum(rows_to_keep)
+        mapper = {}
+        ctr = 0
+        for irow in range(len(rows_to_keep)):
+            if rows_to_keep[irow]:
+                mapper[irow] = ctr
+                ctr += 1
+        #
+        remapped_indices = np.zeros([number_to_keep, np.shape(indices)[1]], dtype = np.int32)
+        for jcol in range(np.shape(indices)[1]):
+            ctr = 0
+            for irow in range(np.shape(indices)[0]):
+                old_row = indices[irow, jcol]
+                if old_row in mapper:
+                    remapped_indices[ctr, jcol] = mapper[old_row]
+                    ctr += 1
+        return remapped_indices
     
-    def _split(self, parent, X, indices, y, subset):
-        attribute, value = split_dataset(X, indices[subset, :], y, pr=False)
-#        print '##',parent.depth+1,attribute,value,sum(X[subset, attribute] <= value),sum(X[subset, attribute] > value),sum(y[subset])/float(len(subset))
-        if (sum(y[subset]) != 0. and sum(y[subset]) != len(subset)) and self._pre_split_checks(parent.depth, sum(X[subset, attribute] <= value), sum(X[subset, attribute] > value)):
+    def _split(self, parent, X, indices, y):
+        attribute, value = split_dataset(X, indices, y, verbose=self.verbose)
+        verbose_print(self.verbose,1,
+                      '##' + str(parent.depth+1) + ' ' + str(attribute) + ' ' +
+                      str(value) + ' ' + str(sum(X[:, attribute] <= value)) + ' ' +
+                      str(sum(X[:, attribute] > value)) + ' ' + str(sum(y)/float(len(y)))
+                      )
+        if (sum(y) != 0. and sum(y) != len(y)) and self._pre_split_checks(parent.depth, sum(X[:, attribute] <= value), sum(X[:, attribute] > value)):
             #
-            send = subset[np.where(X[subset, attribute] <= value)[0]]
-            w1 = sum(y[send])
-            w0 = len(send)-w1
+            left_rows = np.array(X[:, attribute] <= value)
+            send_left = np.where(left_rows)[0]
+            w1 = sum(y[send_left])
+            w0 = len(send_left)-w1
             child_left = Node(parent, parent.depth+1, w0, w1)
-            self._split(child_left, X, indices, y, send) # FIX THIS: indices[send,:] will not point to correct elements of X[send,:] (or y[send])...
+            left_indices = self.remap_split_indices(left_rows, indices)
+            self._split(child_left, X[send_left,:], left_indices, y[send_left])
             #
-            send = subset[np.where(X[subset, attribute] > value)[0]]
-            w1 = sum(y[send])
-            w0 = len(send)-w1
+            right_rows = np.array(X[:, attribute] > value)
+            send_right = np.where(right_rows)[0]
+            w1 = sum(y[send_right])
+            w0 = len(send_right)-w1
             child_right = Node(parent, parent.depth+1, w0, w1)
-            self._split(child_right, X, indices, y, send)
+            right_indices = self.remap_split_indices(right_rows, indices)
+            self._split(child_right, X[send_right,:], right_indices, y[send_right])
             #
             parent.make_splitter(attribute,value,child_left, child_right)
         else:
@@ -167,8 +185,7 @@ class ClassificationTree():
     def fit(self,X,y):
         indices= presort_attributes(X)
         self._root_node= Node(None,0,len(y)-sum(y),sum(y))
-        subset= np.array(range(np.shape(indices)[0]))
-        self._split(self._root_node,X,indices,y,subset)
+        self._split(self._root_node,X,indices,y)
         return None
 
     def score(self,X):

@@ -156,9 +156,9 @@ class TestTree(unittest.TestCase):
                           [ 0.23448313,  0.80478437],
                           [ 0.45593921,  0.32604913],
                           [ 0.8,  0.2]])
-        tree= cart_tree.ClassificationTree(max_depth=20,min_samples_leaf=1)
+        tree= cart_tree.ClassificationTree(max_depth=20,min_samples_leaf=1,verbose=2)
         tree.fit(test_data,test_target)
-        self.assertEqual(tree.score([0.75,0.75]),1.)
+        self.assertEqual(tree.score([0.99,0.99]),1.)
         self.assertEqual(tree.score([0.25,0.25]),0.)
         self.assertEqual(tree.score([0.25,0.75]),0.)
         self.assertEqual(tree.score([0.75,0.25]),0.)
@@ -270,7 +270,7 @@ class TestTree(unittest.TestCase):
                                1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
                                0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1,
                                0, 1, 0, 1, 0, 0, 1, 0])
-        tree= cart_tree.ClassificationTree(max_depth=10,min_samples_leaf=1)
+        tree= cart_tree.ClassificationTree(max_depth=10,min_samples_leaf=1,verbose=1)
         tree.fit(test_data,test_target)
         self.assertEqual(tree.score([0.25,0.25]),0.)
         self.assertEqual(tree.score([0.75,0.25]),1.)
