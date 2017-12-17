@@ -79,6 +79,26 @@ def presort_attributes(dataset):
     return indices
 
 
+def remap_split_indices(rows_to_keep, indices):
+    number_to_keep = sum(rows_to_keep)
+    mapper = {}
+    ctr = 0
+    for irow in range(len(rows_to_keep)):
+        if rows_to_keep[irow]:
+            mapper[irow] = ctr
+            ctr += 1
+    #
+    remapped_indices = np.zeros([number_to_keep, np.shape(indices)[1]], dtype=np.int32)
+    for jcol in range(np.shape(indices)[1]):
+        ctr = 0
+        for irow in range(np.shape(indices)[0]):
+            old_row = indices[irow, jcol]
+            if old_row in mapper:
+                remapped_indices[ctr, jcol] = mapper[old_row]
+                ctr += 1
+    return remapped_indices
+
+
 class Node:
     def __init__(self, parent, depth, w0, w1):
         self.parent = parent
@@ -128,25 +148,6 @@ class ClassificationTree:
                 left_count >= self.min_sample_leaf and
                 right_count >= self.min_sample_leaf)
     
-    def remap_split_indices(self, rows_to_keep, indices):
-        number_to_keep = sum(rows_to_keep)
-        mapper = {}
-        ctr = 0
-        for irow in range(len(rows_to_keep)):
-            if rows_to_keep[irow]:
-                mapper[irow] = ctr
-                ctr += 1
-        #
-        remapped_indices = np.zeros([number_to_keep, np.shape(indices)[1]], dtype=np.int32)
-        for jcol in range(np.shape(indices)[1]):
-            ctr = 0
-            for irow in range(np.shape(indices)[0]):
-                old_row = indices[irow, jcol]
-                if old_row in mapper:
-                    remapped_indices[ctr, jcol] = mapper[old_row]
-                    ctr += 1
-        return remapped_indices
-    
     def _split(self, parent, X, indices, y):
         attribute, value = split_dataset(X, indices, y, verbose=self.verbose)
         verbose_print(self.verbose, 1,
@@ -162,7 +163,7 @@ class ClassificationTree:
             w1 = sum(y[send_left])
             w0 = len(send_left)-w1
             child_left = Node(parent, parent.depth+1, w0, w1)
-            left_indices = self.remap_split_indices(left_rows, indices)
+            left_indices = remap_split_indices(left_rows, indices)
             self._split(child_left, X[send_left, :], left_indices, y[send_left])
             #
             right_rows = np.array(X[:, attribute] > value)
@@ -170,7 +171,7 @@ class ClassificationTree:
             w1 = sum(y[send_right])
             w0 = len(send_right)-w1
             child_right = Node(parent, parent.depth+1, w0, w1)
-            right_indices = self.remap_split_indices(right_rows, indices)
+            right_indices = remap_split_indices(right_rows, indices)
             self._split(child_right, X[send_right, :], right_indices, y[send_right])
             #
             parent.make_splitter(attribute, value, child_left, child_right)
