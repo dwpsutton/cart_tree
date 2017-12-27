@@ -99,7 +99,7 @@ def remap_split_indices(rows_to_keep, indices):
     return remapped_indices
 
 
-class Node:
+class Node(object):
     def __init__(self, parent, depth, w0, w1):
         self.parent = parent
         self.w0 = w0
@@ -136,12 +136,24 @@ class Node:
             return self.child_right.score(x)
 
 
-class ClassificationTree:
+class ClassificationTree(object):
     def __init__(self, max_depth=10, min_samples_leaf=1, verbose=0):
         self._root_node = None
         self.max_depth = max_depth
         self.min_sample_leaf = min_samples_leaf
         self.verbose = verbose
+
+    def _data_parameters_consistent(self, X):
+        checks = {
+            "self.max_depth > 0": self.max_depth > 0,
+            "np.shape(X)[0] > 0": np.shape(X)[0] > 0,
+            "self.min_sample_leaf >= 1": self.min_sample_leaf >= 1,
+            "self.min_sample_leaf <= np.shape(X)[0]": self.min_sample_leaf <= np.shape(X)[0]
+        }
+        for c in checks:
+            if not checks[c]:
+                raise ValueError("ClassificationTree input check failed: " + c)
+        return None
 
     def _pre_split_checks(self, depth, left_count, right_count):
         return (depth < self.max_depth and
@@ -180,6 +192,7 @@ class ClassificationTree:
         return None
 
     def fit(self, X, y):
+        self._data_parameters_consistent(X)
         indices = presort_attributes(X)
         self._root_node = Node(None, 0, len(y)-sum(y), sum(y))
         self._split(self._root_node, X, indices, y)

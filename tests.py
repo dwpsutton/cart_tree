@@ -103,6 +103,12 @@ class TestNode(unittest.TestCase):
 
 
 class TestTree(unittest.TestCase):
+    def test_no_data(self):
+        tree = cart_tree.ClassificationTree()
+        test_data = []
+        test_target = []
+        self.assertRaises(ValueError, tree.fit, test_data, test_target)
+
     def test_half_separable(self):
         test_data = np.array([[0.01564607,  0.47523396],
                              [0.85026578,  0.06799358],
