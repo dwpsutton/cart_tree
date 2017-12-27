@@ -5,7 +5,17 @@ import random
 class RandomisedClassificationTree(ClassificationTree):
     def __init__(self, n_features, **kwargs):
         super(RandomisedClassificationTree, self).__init__(**kwargs)
-        self.n_features= n_features
+        self.n_features = n_features
+
+    def _data_parameters_consistent(self, X):
+        checks = {
+            "self.n_features > 0": self.n_features > 0,
+            "self.n_features <= np.shape(X)[1]": self.n_features <= np.shape(X)[1]
+        }
+        for c in checks:
+            if not checks[c]:
+                raise ValueError("RandomisedClassificationTree input check failed: " + c)
+        return None
 
     def _split(self, parent, X, indices, y):
         feature_set = set()
@@ -45,8 +55,12 @@ class RandomisedClassificationTree(ClassificationTree):
             parent.make_leaf()
         return None
 
+    def fit(self, X, y):
+        self._data_parameters_consistent(X)
+        return super(RandomisedClassificationTree, self).fit(X, y)
 
-class RandomForestClassifier():
+
+class RandomForestClassifier(object):
     def __init__(self, n_trees=10, random_seed=None, bootstrap_fraction=1.0, **kwargs):
         self.n_trees = n_trees
         self.random_seed = random_seed
@@ -55,7 +69,19 @@ class RandomForestClassifier():
         for i in range(self.n_trees):
             self._trees[i] = RandomisedClassificationTree(**kwargs)
 
+    def _data_parameters_consistent(self, X):
+        checks = {
+            "self.n_trees > 0": self.n_trees > 0,
+            "self.bootstrap_fraction > 0": self.bootstrap_fraction > 0,
+            "self.bootstrap_fraction <= 1": self.bootstrap_fraction <= 1
+        }
+        for c in checks:
+            if not checks[c]:
+                raise ValueError("RandomForestClassifier input check failed: " + c)
+        return None
+
     def fit(self, X, y):
+        self._data_parameters_consistent(X)
         n_samples = np.shape(X)[0]
         random.seed(self.random_seed)
         for tree in self._trees:
