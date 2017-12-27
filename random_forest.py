@@ -47,14 +47,22 @@ class RandomisedClassificationTree(ClassificationTree):
 
 
 class RandomForestClassifier():
-    def __init__(self, n_trees, **kwargs):
-        self.n_trees= n_trees
+    def __init__(self, n_trees=10, random_seed=None, bootstrap_fraction=1.0, **kwargs):
+        self.n_trees = n_trees
+        self.random_seed = random_seed
+        self.bootstrap_fraction = bootstrap_fraction
         self._trees = []
         for i in range(self.n_trees):
             self._trees[i] = RandomisedClassificationTree(**kwargs)
 
     def fit(self, X, y):
-        # bootstrap subsample dataset and fit a tree
+        n_samples = np.shape(X)[0]
+        random.seed(self.random_seed)
+        for tree in self._trees:
+            subsample_indices = np.random.choice(range(n_samples),
+                                                 size=self.bootstrap_fraction * n_samples,
+                                                 replace=True)
+            tree.fit(X[subsample_indices, :], y[subsample_indices])
         return None
 
     def score(self, X):
