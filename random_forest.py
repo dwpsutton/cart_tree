@@ -3,7 +3,7 @@ import random
 
 
 class RandomisedClassificationTree(ClassificationTree):
-    def __init__(self, n_features, **kwargs):
+    def __init__(self, n_features=1, **kwargs):
         super(RandomisedClassificationTree, self).__init__(**kwargs)
         self.n_features = n_features
 
@@ -19,7 +19,7 @@ class RandomisedClassificationTree(ClassificationTree):
 
     def _split(self, parent, X, indices, y):
         feature_set = set()
-        while len(feature_set) < self.n_features:
+        while len(feature_set) < np.sqrt(self.n_features):
             i = random.randrange(0, np.shape(X)[1], 1)
             if i not in feature_set:
                 feature_set.add(i)
@@ -61,13 +61,14 @@ class RandomisedClassificationTree(ClassificationTree):
 
 
 class RandomForestClassifier(object):
-    def __init__(self, n_trees=10, random_seed=None, bootstrap_fraction=1.0, **kwargs):
+    def __init__(self, n_trees=10, n_features=1, random_seed=None, bootstrap_fraction=1.0, **kwargs):
         self.n_trees = n_trees
+        self.n_features = n_features
         self.random_seed = random_seed
         self.bootstrap_fraction = bootstrap_fraction
         self._trees = []
         for i in range(self.n_trees):
-            self._trees[i] = RandomisedClassificationTree(**kwargs)
+            self._trees.append(RandomisedClassificationTree(self.n_features, **kwargs))
 
     def _data_parameters_consistent(self, X):
         checks = {
