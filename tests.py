@@ -1,5 +1,7 @@
 import cart_tree
+import random_forest
 import numpy as np
+import random
 import unittest
 
 
@@ -284,6 +286,37 @@ class TestTree(unittest.TestCase):
         self.assertEqual(tree.score([0.75, 0.25]), 1.)
         self.assertEqual(tree.score([0.75, 0.25]), 1.)
         self.assertEqual(tree.score([0.75, 0.75]), 0.)
+
+
+class TestRandomisedTree(unittest.TestCase):
+
+    def test_separable_feature_allowed(self):
+        test_data = np.array([
+            [1, 0, 3],
+            [1, 1, 3],
+            [0, 0, 3],
+            [0, 1, 3]
+        ])
+        test_target = np.array([0, 1, 0, 1])
+        random.seed(5)
+        tree1 = random_forest.RandomisedClassificationTree(n_features=1, max_depth=1, min_samples_leaf=1, verbose=0)
+        tree1.fit(test_data, test_target)
+        self.assertEqual(tree1.score([1, 0]), 0.)
+        self.assertEqual(tree1.score([0, 1]), 1.)
+
+    def test_separable_feature_not_allowed(self):
+        test_data = np.array([
+            [1, 0, 3],
+            [1, 1, 3],
+            [0, 0, 3],
+            [0, 1, 3]
+        ])
+        test_target = np.array([0, 1, 0, 1])
+        random.seed(1)
+        tree2 = random_forest.RandomisedClassificationTree(n_features=1, max_depth=1, min_samples_leaf=1, verbose=0)
+        tree2.fit(test_data, test_target)
+        self.assertEqual(tree2.score([1, 0]), 0.5)
+        self.assertEqual(tree2.score([0, 1]), 0.5)
 
 
 if __name__ == '__main__':
