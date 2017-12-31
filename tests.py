@@ -319,6 +319,27 @@ class TestRandomisedTree(unittest.TestCase):
         self.assertEqual(tree2.score([0, 1]), 0.5)
 
 
+class TestRandomForestScoring(unittest.TestCase):
+
+    def test_single_tree_score(self):
+        rf = random_forest.RandomForestClassifier(n_trees=1)
+        rf._trees[0]._root_node = cart_tree.Node(None, 0, 3, 1)
+        rf._trees[0]._root_node.make_leaf()
+        self.assertEqual(rf.score([0]), 0.25)
+
+    def test_multi_tree_score(self):
+        rf = random_forest.RandomForestClassifier(n_trees=4)
+        rf._trees[0]._root_node = cart_tree.Node(None, 0, 3, 1)
+        rf._trees[0]._root_node.make_leaf()
+        rf._trees[1]._root_node = cart_tree.Node(None, 0, 2, 2)
+        rf._trees[1]._root_node.make_leaf()
+        rf._trees[2]._root_node = cart_tree.Node(None, 0, 4, 1)
+        rf._trees[2]._root_node.make_leaf()
+        rf._trees[3]._root_node = cart_tree.Node(None, 0, 4, 1)
+        rf._trees[3]._root_node.make_leaf()
+        self.assertEqual(rf.score([0]), 0.2875)
+
+
 if __name__ == '__main__':
     unittest.main()
 
