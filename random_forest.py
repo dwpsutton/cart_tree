@@ -87,7 +87,7 @@ class RandomForestClassifier(object):
         random.seed(self.random_seed)
         for tree in self._trees:
             subsample_indices = np.random.choice(range(n_samples),
-                                                 size=self.bootstrap_fraction * n_samples,
+                                                 size=int(self.bootstrap_fraction * n_samples),
                                                  replace=True)
             tree.fit(X[subsample_indices, :], y[subsample_indices])
         return None
