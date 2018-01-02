@@ -24,7 +24,8 @@ class RandomisedClassificationTree(ClassificationTree):
             if i not in feature_set:
                 feature_set.add(i)
         chosen_features = list(feature_set)
-        chosen_attribute, value = split_dataset(X[:, chosen_features], indices, y, verbose=self.verbose)
+        chosen_attribute, value = split_dataset(X[:, chosen_features], indices[:, chosen_features], y,
+                                                verbose=self.verbose)
         attribute = chosen_features[chosen_attribute]
         verbose_print(self.verbose, 1,
                       '##' + str(parent.depth+1) + ' ' + str(attribute) + ' ' +
@@ -84,7 +85,7 @@ class RandomForestClassifier(object):
     def fit(self, X, y):
         self._data_parameters_consistent(X)
         n_samples = np.shape(X)[0]
-        random.seed(self.random_seed)
+        np.random.seed(self.random_seed)
         for tree in self._trees:
             subsample_indices = np.random.choice(range(n_samples),
                                                  size=int(self.bootstrap_fraction * n_samples),
