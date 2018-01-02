@@ -340,6 +340,42 @@ class TestRandomForestScoring(unittest.TestCase):
         self.assertEqual(rf.score([0]), 0.2875)
 
 
+class TestRandomForestTraining(unittest.TestCase):
+
+    def test_train(self):
+        test_data = np.array([[0.78703784,  0.40344258],
+                              [0.95215905,  0.96368907],
+                              [0.12618461,  0.92698938],
+                              [0.54876765,  0.98608637],
+                              [0.70212972,  0.81429173],
+                              [0.56842067,  0.24412982],
+                              [0.37948561,  0.11131706],
+                              [0.49089964,  0.019061],
+                              [0.09146343,  0.46473033],
+                              [0.07748008,  0.64773943],
+                              [0.79754095,  0.21537161],
+                              [0.82718021,  0.33922646],
+                              [0.71399306,  0.66841365],
+                              [0.78083,  0.02227081],
+                              [0.99013941,  0.75494151],
+                              [0.11237802,  0.16171054],
+                              [0.92530334,  0.98485672],
+                              [0.07240276,  0.00673273],
+                              [0.75909046,  0.08849293],
+                              [0.52953978,  0.01886877]]
+                             )
+        # tree 1 split: (0.82718021, attr 0, below_score= 2/18, above_score= 2/2
+        # tree 2 split: ((0.79754095, attr 0, below_score= 1/18, above_score= 2/2
+        # tree 3 split: (0.64773943, attr 1, below_score= 0/13, above_score= 6/7
+        test_target = np.array([0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0])
+        random.seed(1)
+        rf = random_forest.RandomForestClassifier(n_trees=3, random_seed=1, max_depth=1)
+        rf.fit(test_data, test_target)
+        self.assertAlmostEqual(rf.score([0.5, 0.5]), 0.0555555555556)
+        self.assertAlmostEqual(rf.score([0.5, 0.7]), 0.34126984127)
+        self.assertAlmostEqual(rf.score([0.8, 0.8]), 0.656084656085)
+
+
 if __name__ == '__main__':
     unittest.main()
 
